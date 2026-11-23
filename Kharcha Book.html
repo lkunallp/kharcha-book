@@ -1,0 +1,806 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kharcha Book</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Inter:wght@400;500;600&display=swap">
+<style>
+/* Layout: soft glowing backdrop, one centered column. Greeting hero with the month's available balance,
+   then trend, wallet tiles and a spending donut. Entries and Savings sit on their own tabs. Hue drives the accent. */
+:root {
+  --h: 175;
+  --bg: hsl(var(--h) 32% 96%);
+  --glow1: hsl(var(--h) 75% 86% / 0.75);
+  --glow2: hsl(calc(var(--h) + 60) 70% 90% / 0.7);
+  --surface: #FFFFFF;
+  --fg: #12201D;
+  --muted: #587069;
+  --line: hsl(var(--h) 22% 89%);
+  --accent: hsl(var(--h) 62% 32%);
+  --accent-fg: #FFFFFF;
+  --accent-soft: hsl(var(--h) 55% 92%);
+  --in: #17794A;
+  --in-soft: #E1F4EA;
+  --out: #C0432A;
+  --out-soft: #FCE8E2;
+  --shadow: 0 1px 2px rgba(18, 32, 29, 0.05), 0 10px 28px rgba(18, 32, 29, 0.07);
+  --catl: 44%;
+  --font-display: "Bricolage Grotesque", "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: hsl(var(--h) 24% 8%);
+    --glow1: hsl(var(--h) 65% 26% / 0.45);
+    --glow2: hsl(calc(var(--h) + 60) 55% 24% / 0.35);
+    --surface: hsl(var(--h) 18% 13%);
+    --fg: #E8F1EE; --muted: #93A8A1; --line: hsl(var(--h) 14% 22%);
+    --accent: hsl(var(--h) 75% 70%); --accent-fg: hsl(var(--h) 35% 9%); --accent-soft: hsl(var(--h) 38% 21%);
+    --in: #5CCB93; --in-soft: #143125; --out: #FF9A7A; --out-soft: #3A2018;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.3);
+    --catl: 64%;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: hsl(var(--h) 24% 8%);
+  --glow1: hsl(var(--h) 65% 26% / 0.45);
+  --glow2: hsl(calc(var(--h) + 60) 55% 24% / 0.35);
+  --surface: hsl(var(--h) 18% 13%);
+  --fg: #E8F1EE; --muted: #93A8A1; --line: hsl(var(--h) 14% 22%);
+  --accent: hsl(var(--h) 75% 70%); --accent-fg: hsl(var(--h) 35% 9%); --accent-soft: hsl(var(--h) 38% 21%);
+  --in: #5CCB93; --in-soft: #143125; --out: #FF9A7A; --out-soft: #3A2018;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.3);
+  --catl: 64%;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background-color: var(--bg);
+  background-image: radial-gradient(900px 520px at 0% -8%, var(--glow1), transparent 62%), radial-gradient(760px 520px at 100% 108%, var(--glow2), transparent 62%);
+  background-attachment: fixed;
+  color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 22px 96px;
+  transition: background-color .3s;
+}
+.app { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.app[hidden], .gate[hidden] { display: none !important; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.015em; }
+h1 { font-size: 1.55rem; line-height: 1.1; }
+h2 { font-size: 1.1rem; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+.small { font-size: 0.82rem; }
+.label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; }
+button, input, select { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* gate */
+.gate { max-width: 440px; margin: 14vh auto 0; text-align: center; display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.gate .logo { width: 56px; height: 56px; }
+.gate p { margin: 0; color: var(--muted); }
+
+/* header */
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px; }
+.brand { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.brand svg { width: 42px; height: 42px; flex: none; }
+.brand p { margin: 1px 0 0; font-size: 0.82rem; color: var(--muted); }
+.who { display: flex; align-items: center; gap: 10px; }
+.chip-user { display: inline-flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 4px; box-shadow: var(--shadow); max-width: 100%; }
+.chip-user img { width: 28px; height: 28px; border-radius: 50%; display: block; }
+.chip-user span { font-size: 0.85rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 9rem; }
+.swatches { display: inline-flex; gap: 6px; }
+.swatches button { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--surface); cursor: pointer; padding: 0; box-shadow: 0 0 0 1px var(--line); background: hsl(var(--sw) 62% 42%); transition: transform .15s; }
+.swatches button:hover { transform: scale(1.15); }
+.swatches button[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--accent); }
+
+nav.tabs { display: flex; gap: 6px; padding: 5px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); overflow-x: auto; }
+nav.tabs button { flex: 1; border: 0; background: transparent; padding: 9px 14px; cursor: pointer; color: var(--muted); font-weight: 500; border-radius: 10px; white-space: nowrap; transition: background .2s, color .2s; }
+nav.tabs button:hover { color: var(--fg); }
+nav.tabs button[aria-current="page"] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+
+.monthbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.monthbar[hidden] { display: none !important; }
+.month { display: inline-flex; align-items: center; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); box-shadow: var(--shadow); }
+.month button { border: 0; background: transparent; padding: 7px 14px; cursor: pointer; font-size: 1.1rem; line-height: 1; border-radius: 999px; transition: background .15s; }
+.month button:hover { background: var(--accent-soft); }
+.month span { min-width: 8rem; text-align: center; font-weight: 600; font-size: 0.92rem; }
+
+section.panel { display: flex; flex-direction: column; gap: 18px; animation: rise .4s ease both; }
+section.panel[hidden] { display: none !important; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0; box-shadow: var(--shadow); }
+.card > header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+
+/* hero */
+.hero { background: linear-gradient(135deg, var(--accent-soft), var(--surface) 70%); gap: 6px; }
+.hero .greet { font-family: var(--font-display); font-size: 1.15rem; font-weight: 600; margin: 0; }
+.hero .big { font-family: var(--font-display); font-size: clamp(2.1rem, 8vw, 3rem); font-weight: 700; line-height: 1.1; color: var(--accent); overflow-wrap: anywhere; }
+.hero .big.neg { color: var(--out); }
+.hero .eq { font-size: 0.82rem; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.stat { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 4px; min-width: 0; box-shadow: var(--shadow); transition: transform .2s; }
+.stat:hover { transform: translateY(-2px); }
+.stat b { font-family: var(--font-display); font-size: 1.25rem; line-height: 1.15; overflow-wrap: anywhere; }
+.stat.in b { color: var(--in); }
+.stat.out b { color: var(--out); }
+.stat.sav b { color: var(--accent); }
+@media (max-width: 480px) { .stats { grid-template-columns: minmax(0, 1fr); } .stat { flex-direction: row; justify-content: space-between; align-items: baseline; } }
+
+/* trend */
+.trend { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 8px; align-items: end; height: 170px; }
+.tcol { display: flex; flex-direction: column; align-items: center; gap: 6px; height: 100%; min-width: 0; }
+.tbars { flex: 1; width: 100%; display: flex; align-items: end; justify-content: center; gap: 4px; }
+.tbars i { display: block; width: 36%; max-width: 20px; min-height: 3px; border-radius: 6px 6px 2px 2px; height: 0; transition: height .7s cubic-bezier(.2, .8, .2, 1); }
+.tbars i.in { background: var(--in); }
+.tbars i.out { background: var(--out); }
+.tcol.cur .tm { color: var(--accent); font-weight: 700; }
+.tm { font-size: 0.75rem; color: var(--muted); }
+.legend { display: flex; gap: 14px; font-size: 0.8rem; color: var(--muted); flex-wrap: wrap; }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; background: var(--in); vertical-align: -1px; }
+.legend span.o::before { background: var(--out); }
+
+/* wallets */
+.wallets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 640px) { .wallets { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.wallet { border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 3px; background: var(--bg); min-width: 0; transition: transform .2s, border-color .2s; }
+.wallet:hover { transform: translateY(-2px); border-color: var(--accent); }
+.wallet b { font-family: var(--font-display); font-size: 1.1rem; overflow-wrap: anywhere; }
+.wallet .io { font-size: 0.75rem; color: var(--muted); }
+
+/* donut */
+.donutwrap { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 18px; align-items: center; }
+@media (max-width: 520px) { .donutwrap { grid-template-columns: minmax(0, 1fr); justify-items: center; } .donutwrap .dl { width: 100%; } }
+.donut { position: relative; width: 170px; height: 170px; }
+.donut svg { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+.donut .ring { fill: none; stroke: var(--line); stroke-width: 5; }
+.donut .slice { fill: none; stroke-width: 5; stroke: hsl(var(--ch) 62% var(--catl)); transition: stroke-dasharray .8s cubic-bezier(.2, .8, .2, 1); }
+.donut .mid { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 28px; }
+.donut .mid b { font-family: var(--font-display); font-size: 1.15rem; line-height: 1.1; overflow-wrap: anywhere; }
+.dl { display: flex; flex-direction: column; gap: 8px; }
+.dl div { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+.dl .sw { width: 12px; height: 12px; border-radius: 4px; flex: none; background: hsl(var(--ch) 62% var(--catl)); }
+.dl .n { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+
+/* forms */
+form.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+form.grid .wide { grid-column: 1 / -1; }
+@media (max-width: 480px) { form.grid { grid-template-columns: minmax(0, 1fr); } }
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field label { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+input[type="number"], input[type="text"], input[type="date"], select {
+  width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); min-height: 42px; transition: border-color .15s, box-shadow .15s;
+}
+input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); outline: none; }
+.btn { border: 1px solid var(--accent); background: var(--accent); color: var(--accent-fg); padding: 10px 18px; border-radius: 10px; font-weight: 600; cursor: pointer; min-height: 42px; transition: transform .15s, filter .15s; }
+.btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.btn.ghost { background: transparent; color: var(--accent); }
+.btn.small { padding: 4px 12px; min-height: 0; font-size: 0.82rem; }
+.btn:disabled { opacity: 0.6; cursor: default; transform: none; }
+.linkbtn { border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: 0.8rem; padding: 4px 6px; border-radius: 6px; }
+.linkbtn:hover { color: var(--out); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--bg); }
+.seg button { border: 0; background: transparent; padding: 7px 14px; cursor: pointer; font-size: 0.88rem; color: var(--muted); transition: background .2s; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+
+/* entry list */
+.list { display: flex; flex-direction: column; }
+.item { display: grid; grid-template-columns: 2.7rem minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 11px 0; border-top: 1px solid var(--line); animation: rise .35s ease both; }
+.item:first-child { border-top: 0; }
+.badge { width: 2.7rem; height: 2.7rem; border-radius: 12px; display: grid; place-items: center; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.03em; }
+.badge.in { background: var(--in-soft); color: var(--in); }
+.badge.out { background: var(--out-soft); color: var(--out); }
+.item .m { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.item .m strong { font-weight: 600; overflow-wrap: anywhere; }
+.item .a { text-align: right; font-weight: 600; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.78rem; color: var(--muted); }
+.chip { border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; background: var(--bg); color: var(--fg); font-size: 0.75rem; font-weight: 500; }
+.pos { color: var(--in); }
+.neg { color: var(--out); }
+.empty { padding: 22px 8px; text-align: center; color: var(--muted); }
+.empty b { display: block; color: var(--fg); font-family: var(--font-display); font-size: 1.05rem; margin-bottom: 4px; }
+
+/* savings */
+.savhero { background: linear-gradient(135deg, var(--accent-soft), var(--surface) 75%); }
+.bigsave { font-family: var(--font-display); font-size: clamp(2.2rem, 8vw, 3rem); font-weight: 700; color: var(--accent); line-height: 1.1; overflow-wrap: anywhere; }
+.goals { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.goal { border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 4px 14px; align-items: center; background: var(--bg); transition: transform .2s; }
+.goal:hover { transform: translateY(-2px); }
+.goal svg { width: 64px; height: 64px; transform: rotate(-90deg); grid-row: span 2; }
+.goal .tr { fill: none; stroke: var(--line); stroke-width: 7; }
+.goal .pr { fill: none; stroke: var(--accent); stroke-width: 7; stroke-linecap: round; transition: stroke-dashoffset .9s cubic-bezier(.2, .8, .2, 1); }
+.goal strong { overflow-wrap: anywhere; }
+.goal .acts { grid-column: 1 / -1; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+.notice { font-size: 0.85rem; color: var(--muted); border: 1px dashed var(--line); border-radius: 10px; padding: 10px 12px; background: var(--surface); }
+.notice[hidden] { display: none !important; }
+.credit { text-align: center; font-size: 0.82rem; color: var(--muted); display: flex; flex-direction: column; gap: 2px; padding-top: 6px; }
+.credit strong { color: var(--fg); font-family: var(--font-display); font-weight: 600; }
+#fab { position: fixed; right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); z-index: 15; border: 0; border-radius: 999px; padding: 13px 20px; background: var(--accent); color: var(--accent-fg); font-weight: 600; cursor: pointer; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); transition: transform .15s; }
+#fab:hover { transform: translateY(-2px) scale(1.03); }
+#fab[hidden] { display: none !important; }
+#toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(76px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 10px; font-size: 0.9rem; max-width: calc(100vw - 32px); z-index: 20; }
+#toast[hidden] { display: none !important; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="gate" id="gate">
+  <svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="var(--accent)"/><path d="M14 17h20a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H14a3 3 0 0 1-3-3V20a3 3 0 0 1 3-3Z" fill="none" stroke="var(--accent-fg)" stroke-width="2.4"/><path d="M14 17l16-6a2 2 0 0 1 3 1.9V17" fill="none" stroke="var(--accent-fg)" stroke-width="2.4" stroke-linejoin="round"/><circle cx="30" cy="26" r="2.4" fill="var(--accent-fg)"/></svg>
+  <h1>Kharcha Book</h1>
+  <p id="gateMsg">Opening your book…</p>
+  <p class="small">Created by Kunal Patle</p>
+</div>
+
+<div class="app" id="app" hidden>
+  <header class="top">
+    <div class="brand">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><rect width="48" height="48" rx="14" fill="var(--accent)"/><path d="M14 17h20a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H14a3 3 0 0 1-3-3V20a3 3 0 0 1 3-3Z" fill="none" stroke="var(--accent-fg)" stroke-width="2.4"/><path d="M14 17l16-6a2 2 0 0 1 3 1.9V17" fill="none" stroke="var(--accent-fg)" stroke-width="2.4" stroke-linejoin="round"/><circle cx="30" cy="26" r="2.4" fill="var(--accent-fg)"/></svg>
+      <div><h1>Kharcha Book</h1><p>Your money, kept private to your account.</p></div>
+    </div>
+    <div class="who">
+      <div class="swatches" id="swatches" role="group" aria-label="Colour theme"></div>
+      <div class="chip-user"><img id="avatar" alt=""><span id="userName">You</span></div>
+    </div>
+  </header>
+
+  <p class="notice" id="status" hidden></p>
+
+  <nav class="tabs" aria-label="Sections">
+    <button type="button" data-tab="overview" aria-current="page">Overview</button>
+    <button type="button" data-tab="entries">Entries</button>
+    <button type="button" data-tab="savings">Savings</button>
+  </nav>
+
+  <div class="monthbar" id="monthbar">
+    <div class="month" role="group" aria-label="Month">
+      <button type="button" id="prev" aria-label="Previous month">&#8249;</button>
+      <span id="monthLabel" class="num"></span>
+      <button type="button" id="next" aria-label="Next month">&#8250;</button>
+    </div>
+  </div>
+
+  <!-- OVERVIEW -->
+  <section class="panel" id="p-overview">
+    <div class="card hero">
+      <p class="greet" id="greet">Hello</p>
+      <span class="label" id="availLabel">Available this month</span>
+      <div class="big num" id="sAvail">₹0</div>
+      <span class="eq">Income − spent − moved to savings</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat in"><span class="label">Income</span><b class="num" id="sIn">₹0</b></div>
+      <div class="stat out"><span class="label">Spent</span><b class="num" id="sOut">₹0</b></div>
+      <div class="stat sav"><span class="label">Saved</span><b class="num" id="sSav">₹0</b></div>
+    </div>
+
+    <div class="card">
+      <header><h2>Last six months</h2><div class="legend"><span>Income</span><span class="o">Spent</span></div></header>
+      <div class="trend" id="trend" role="img" aria-label="Income and spending for the last six months"></div>
+    </div>
+
+    <div class="card">
+      <header><h2>By payment mode</h2><span class="small muted">Balance = in − out</span></header>
+      <div class="wallets" id="wallets"></div>
+    </div>
+
+    <div class="card">
+      <header><h2>Where it went</h2><span class="small muted" id="catTotal"></span></header>
+      <div id="donutBox"></div>
+    </div>
+  </section>
+
+  <!-- ENTRIES -->
+  <section class="panel" id="p-entries" hidden>
+    <div class="card">
+      <header><h2>Add an entry</h2>
+        <div class="seg" id="typeSeg" role="group" aria-label="Entry type">
+          <button type="button" data-type="expense" aria-pressed="true">Spent</button>
+          <button type="button" data-type="income" aria-pressed="false">Received</button>
+        </div>
+      </header>
+      <form class="grid" id="txForm" autocomplete="off">
+        <div class="field"><label for="txAmount">Amount (₹)</label><input id="txAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="250" required></div>
+        <div class="field"><label for="txMode" id="txModeLabel">Paid through</label><select id="txMode"></select></div>
+        <div class="field"><label for="txCat">Category</label><select id="txCat"></select></div>
+        <div class="field"><label for="txDate">Date</label><input id="txDate" type="date" required></div>
+        <div class="field wide"><label for="txNote">Note (optional)</label><input id="txNote" type="text" maxlength="80" placeholder="Chai with Riya, auto fare, recharge"></div>
+        <div class="wide"><button class="btn" type="submit" id="txSubmit">Add expense</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <header>
+        <h2>Entries this month</h2>
+        <div class="field" style="min-width:9rem"><label for="modeFilter" class="label">Mode</label><select id="modeFilter"></select></div>
+      </header>
+      <div class="list" id="txList"></div>
+    </div>
+  </section>
+
+  <!-- SAVINGS -->
+  <section class="panel" id="p-savings" hidden>
+    <div class="card savhero">
+      <span class="label">Total saved</span>
+      <div class="bigsave num" id="savTotal">₹0</div>
+      <span class="small muted" id="savSub"></span>
+    </div>
+
+    <div class="card">
+      <header><h2>Goals</h2><span class="small muted">Targets to save towards</span></header>
+      <div class="goals" id="goalList"></div>
+      <form class="grid" id="goalForm" autocomplete="off">
+        <div class="field"><label for="goalName">New goal</label><input id="goalName" type="text" maxlength="40" placeholder="Goa trip, new phone" required></div>
+        <div class="field"><label for="goalTarget">Target (₹)</label><input id="goalTarget" type="number" inputmode="decimal" min="1" step="1" placeholder="15000" required></div>
+        <div class="wide"><button class="btn ghost" type="submit">Create goal</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <header><h2>Add to savings</h2>
+        <div class="seg" id="svKindSeg" role="group" aria-label="Savings action">
+          <button type="button" data-kind="deposit" aria-pressed="true">Save</button>
+          <button type="button" data-kind="withdraw" aria-pressed="false">Take out</button>
+        </div>
+      </header>
+      <form class="grid" id="svForm" autocomplete="off">
+        <div class="field"><label for="svAmount">Amount (₹)</label><input id="svAmount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="500" required></div>
+        <div class="field"><label for="svGoal">For goal</label><select id="svGoal"></select></div>
+        <div class="field"><label for="svDate">Date</label><input id="svDate" type="date" required></div>
+        <div class="field"><label for="svNote">Note (optional)</label><input id="svNote" type="text" maxlength="80" placeholder="Month-end top up"></div>
+        <div class="wide"><button class="btn" type="submit" id="svSubmit">Save to savings</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <header><h2>Savings history</h2></header>
+      <div class="list" id="svList"></div>
+    </div>
+  </section>
+
+  <footer class="credit">
+    <span>Created by <strong>Kunal Patle</strong></span>
+    <span>Every person signs in with their own account and sees only their own entries.</span>
+  </footer>
+</div>
+<button type="button" id="fab" hidden>+ Add entry</button>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+(function () {
+  var MODES = ["UPI", "Cash", "Card", "Bank"];
+  var CATS = {
+    expense: ["Food", "Travel", "Rent", "Bills & recharge", "Shopping", "Fun", "Health", "Other"],
+    income: ["Salary", "Pocket money", "Freelance", "Gift", "Other"]
+  };
+  var ACCENTS = [{ n: "Lagoon", h: 175 }, { n: "Blossom", h: 340 }, { n: "Dusk", h: 245 }, { n: "Amber", h: 32 }];
+  var CAT_HUES = [175, 35, 265, 340, 205, 95, 15, 300];
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var $ = function (s) { return document.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(document.querySelectorAll(s)); };
+
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function ymd(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function ym(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1); }
+
+  var state = {
+    tab: "overview", month: ym(new Date()), txType: "expense", svKind: "deposit", modeFilter: "all",
+    tx: [], sv: [], goals: [], me: null, name: "", hue: 175, ready: false,
+    confirmed: { tx: false, sv: false, goals: false }
+  };
+  var cols = null, prefsRef = null, toastTimer = null, prefsBusy = false;
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = text;
+    return e;
+  }
+  function svgEl(tag, attrs) {
+    var e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+    Object.keys(attrs || {}).forEach(function (k) { e.setAttribute(k, attrs[k]); });
+    return e;
+  }
+  function inr(n) {
+    var neg = n < -0.004;
+    var s = "₹" + Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    return neg ? "−" + s : s;
+  }
+  function inrWhole(n) { return inr(Math.round(n)); }
+  function dateParts(s) { var p = String(s || "").split("-"); return new Date(+p[0], (+p[1] || 1) - 1, +p[2] || 1); }
+  function shortDate(s) { return dateParts(s).toLocaleDateString("en-IN", { day: "numeric", month: "short" }); }
+  function monthName(m) { return dateParts(m + "-01").toLocaleDateString("en-IN", { month: "long", year: "numeric" }); }
+  function toast(msg) {
+    var t = $("#toast"); t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.hidden = true; }, 3200);
+  }
+  function setStatus(msg) { var s = $("#status"); s.textContent = msg || ""; s.hidden = !msg; }
+  function sum(arr, f) { return arr.reduce(function (a, x) { return a + f(x); }, 0); }
+  function round2(n) { return Math.round(n * 100) / 100; }
+  function svNet(e) { return e.kind === "withdraw" ? -e.amount : e.amount; }
+  function inMonth(x) { return String(x.date || "").slice(0, 7) === state.month; }
+
+  /* animated number */
+  function tween(node, to, fmt) {
+    var from = node._v || 0; node._v = to;
+    var tk = (node._tk = (node._tk || 0) + 1);
+    if (reduced || from === to) { node.textContent = fmt(to); return; }
+    var s = performance.now(), d = 600;
+    function f(t) {
+      if (node._tk !== tk) return;
+      var k = Math.min(1, (t - s) / d), e = 1 - Math.pow(1 - k, 3);
+      node.textContent = fmt(from + (to - from) * e);
+      if (k < 1) requestAnimationFrame(f); else node.textContent = fmt(to);
+    }
+    requestAnimationFrame(f);
+  }
+  function later(fn) { requestAnimationFrame(function () { requestAnimationFrame(fn); }); }
+
+  /* ---------- static wiring ---------- */
+  function fillSelect(sel, opts, keep) {
+    var cur = keep ? sel.value : null;
+    sel.textContent = "";
+    opts.forEach(function (o) { var op = el("option", "", o.label); op.value = o.value; sel.appendChild(op); });
+    if (cur && opts.some(function (o) { return o.value === cur; })) sel.value = cur;
+  }
+  function fillCats() { fillSelect($("#txCat"), CATS[state.txType].map(function (c) { return { value: c, label: c }; }), true); }
+  fillSelect($("#txMode"), MODES.map(function (m) { return { value: m, label: m }; }));
+  fillSelect($("#modeFilter"), [{ value: "all", label: "All modes" }].concat(MODES.map(function (m) { return { value: m, label: m }; })));
+  fillCats();
+  $("#txDate").value = ymd(new Date());
+  $("#svDate").value = ymd(new Date());
+
+  function applyHue(h) {
+    state.hue = h;
+    document.documentElement.style.setProperty("--h", String(h));
+    $$("#swatches button").forEach(function (b) { b.setAttribute("aria-pressed", String(+b.dataset.h === h)); });
+  }
+  ACCENTS.forEach(function (a) {
+    var b = el("button"); b.type = "button"; b.dataset.h = a.h; b.style.setProperty("--sw", a.h);
+    b.setAttribute("aria-label", a.n + " theme"); b.setAttribute("aria-pressed", String(a.h === 175)); b.title = a.n;
+    b.addEventListener("click", function () {
+      applyHue(a.h);
+      if (prefsRef && !prefsBusy) {
+        prefsBusy = true;
+        prefsRef.set({ hue: a.h }).catch(function () {}).then(function () { prefsBusy = false; });
+      }
+    });
+    $("#swatches").appendChild(b);
+  });
+
+  $$("#typeSeg button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.txType = b.dataset.type;
+      $$("#typeSeg button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      fillCats();
+      $("#txSubmit").textContent = state.txType === "income" ? "Add income" : "Add expense";
+      $("#txModeLabel").textContent = state.txType === "income" ? "Received through" : "Paid through";
+    });
+  });
+  $$("#svKindSeg button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      state.svKind = b.dataset.kind;
+      $$("#svKindSeg button").forEach(function (x) { x.setAttribute("aria-pressed", String(x === b)); });
+      $("#svSubmit").textContent = state.svKind === "withdraw" ? "Take out of savings" : "Save to savings";
+    });
+  });
+  $("#modeFilter").addEventListener("change", function (e) { state.modeFilter = e.target.value; draw(); });
+  $("#prev").addEventListener("click", function () { shiftMonth(-1); });
+  $("#next").addEventListener("click", function () { shiftMonth(1); });
+  function shiftMonth(d) { var t = dateParts(state.month + "-01"); t.setMonth(t.getMonth() + d); state.month = ym(t); draw(); }
+
+  function showTab(name, focusSel) {
+    if (["overview", "entries", "savings"].indexOf(name) < 0) name = "overview";
+    state.tab = name;
+    $$("nav.tabs button").forEach(function (b) {
+      if (b.dataset.tab === name) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+    });
+    ["overview", "entries", "savings"].forEach(function (t) { $("#p-" + t).hidden = t !== name; });
+    $("#monthbar").hidden = name === "savings";
+    $("#fab").hidden = !state.ready || name === "entries";
+    if (focusSel) { var f = $(focusSel); if (f) f.focus(); }
+  }
+  $$("nav.tabs button").forEach(function (b) {
+    b.addEventListener("click", function () { try { location.hash = b.dataset.tab; } catch (e) {} showTab(b.dataset.tab); });
+  });
+  window.addEventListener("hashchange", function () { showTab((location.hash || "").replace("#", "")); });
+  $("#fab").addEventListener("click", function () { try { location.hash = "entries"; } catch (e) {} showTab("entries", "#txAmount"); });
+  showTab((location.hash || "").replace("#", ""));
+
+  /* ---------- writes ---------- */
+  function needsDb() { if (!cols) { toast("Sign in to claude.ai to save entries."); return true; } return false; }
+  function writeFail(e) {
+    var code = e && e.code;
+    if (code === "invalid_argument") toast("You have view-only access. Ask Kunal for Contributor access to save entries.");
+    else if (code === "quota_exceeded") toast("Your book is full. Delete some old entries first.");
+    else toast("Couldn't save that. Try again in a moment.");
+  }
+
+  $("#txForm").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (needsDb()) return;
+    var amount = round2(parseFloat($("#txAmount").value)), date = $("#txDate").value;
+    if (!(amount > 0)) { toast("Enter an amount above zero."); return; }
+    if (!date) { toast("Pick a date."); return; }
+    var btn = $("#txSubmit"); btn.disabled = true;
+    cols.tx.add({ type: state.txType, amount: amount, mode: $("#txMode").value, category: $("#txCat").value, note: $("#txNote").value.trim(), date: date, ts: Date.now() })
+      .then(function () {
+        $("#txAmount").value = ""; $("#txNote").value = "";
+        if (date.slice(0, 7) !== state.month) state.month = date.slice(0, 7);
+        toast(state.txType === "income" ? "Income added" : "Expense added");
+      }).catch(writeFail).then(function () { btn.disabled = false; });
+  });
+
+  $("#goalForm").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (needsDb()) return;
+    var name = $("#goalName").value.trim(), target = round2(parseFloat($("#goalTarget").value));
+    if (!name || !(target > 0)) { toast("Give the goal a name and a target."); return; }
+    cols.goals.add({ name: name, target: target, ts: Date.now() })
+      .then(function () { $("#goalName").value = ""; $("#goalTarget").value = ""; toast("Goal created"); }).catch(writeFail);
+  });
+
+  $("#svForm").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    if (needsDb()) return;
+    var amount = round2(parseFloat($("#svAmount").value)), date = $("#svDate").value, goal = $("#svGoal").value;
+    if (!(amount > 0)) { toast("Enter an amount above zero."); return; }
+    if (!date) { toast("Pick a date."); return; }
+    if (state.svKind === "withdraw") {
+      var have = sum(state.sv.filter(function (e) { return goal ? e.goal === goal : true; }), svNet);
+      if (amount > have) { toast("Only " + inr(have) + " is saved there."); return; }
+    }
+    var btn = $("#svSubmit"); btn.disabled = true;
+    cols.savings.add({ kind: state.svKind, amount: amount, goal: goal || null, note: $("#svNote").value.trim(), date: date, ts: Date.now() })
+      .then(function () {
+        $("#svAmount").value = ""; $("#svNote").value = "";
+        toast(state.svKind === "withdraw" ? "Taken out of savings" : "Added to savings");
+      }).catch(writeFail).then(function () { btn.disabled = false; });
+  });
+
+  function armDelete(btn, col, id) {
+    var armed = false, t = null;
+    btn.addEventListener("click", function () {
+      if (!armed) {
+        armed = true; btn.textContent = "Confirm?"; btn.style.color = "var(--out)";
+        t = setTimeout(function () { armed = false; btn.textContent = "Delete"; btn.style.color = ""; }, 3000);
+        return;
+      }
+      clearTimeout(t);
+      cols[col].doc(id).delete().catch(writeFail);
+    });
+  }
+
+  /* ---------- drawing ---------- */
+  function emptyBox(title, text) {
+    var d = el("div", "empty"); d.appendChild(el("b", "", title)); d.appendChild(document.createTextNode(text)); return d;
+  }
+  function sig(node, s) { if (node._sig === s) return false; node._sig = s; return true; }
+
+  function draw() {
+    if (!state.ready) return;
+    $("#monthLabel").textContent = monthName(state.month);
+    var hr = new Date().getHours();
+    var greet = hr < 12 ? "Good morning" : hr < 17 ? "Good afternoon" : "Good evening";
+    $("#greet").textContent = greet + ", " + (state.name || "there");
+    $("#availLabel").textContent = "Available in " + monthName(state.month);
+
+    var mTx = state.tx.filter(inMonth), mSv = state.sv.filter(inMonth);
+    var inc = sum(mTx.filter(function (x) { return x.type === "income"; }), function (x) { return x.amount; });
+    var exp = sum(mTx.filter(function (x) { return x.type === "expense"; }), function (x) { return x.amount; });
+    var sav = sum(mSv, svNet), avail = inc - exp - sav;
+    tween($("#sIn"), inc, inr); tween($("#sOut"), exp, inr); tween($("#sSav"), sav, inr);
+    var av = $("#sAvail"); tween(av, avail, inr); av.className = "big num" + (avail < 0 ? " neg" : "");
+
+    drawTrend(); drawWallets(mTx); drawDonut(mTx, exp); drawEntries(mTx); drawSavings();
+  }
+
+  function drawTrend() {
+    var box = $("#trend");
+    var base = dateParts(state.month + "-01"), months = [];
+    for (var i = 5; i >= 0; i--) { var d = new Date(base.getFullYear(), base.getMonth() - i, 1); months.push(ym(d)); }
+    var data = months.map(function (m) {
+      var rows = state.tx.filter(function (x) { return String(x.date || "").slice(0, 7) === m; });
+      return {
+        m: m,
+        i: sum(rows.filter(function (x) { return x.type === "income"; }), function (x) { return x.amount; }),
+        o: sum(rows.filter(function (x) { return x.type === "expense"; }), function (x) { return x.amount; })
+      };
+    });
+    if (!sig(box, JSON.stringify(data))) return;
+    var max = Math.max.apply(null, data.map(function (d) { return Math.max(d.i, d.o); }).concat([1]));
+    box.textContent = "";
+    data.forEach(function (d) {
+      var col = el("div", "tcol" + (d.m === state.month ? " cur" : ""));
+      var bars = el("div", "tbars");
+      var a = el("i", "in"), b = el("i", "out");
+      a.title = monthName(d.m) + " income " + inr(d.i); b.title = monthName(d.m) + " spent " + inr(d.o);
+      bars.appendChild(a); bars.appendChild(b);
+      col.appendChild(bars);
+      col.appendChild(el("span", "tm", dateParts(d.m + "-01").toLocaleDateString("en-IN", { month: "short" })));
+      box.appendChild(col);
+      var ha = Math.round(d.i / max * 100) + "%", hb = Math.round(d.o / max * 100) + "%";
+      if (reduced) { a.style.height = ha; b.style.height = hb; } else later(function () { a.style.height = ha; b.style.height = hb; });
+    });
+  }
+
+  function drawWallets(mTx) {
+    var box = $("#wallets");
+    var rows = MODES.map(function (m) {
+      var i = sum(mTx.filter(function (x) { return x.mode === m && x.type === "income"; }), function (x) { return x.amount; });
+      var o = sum(mTx.filter(function (x) { return x.mode === m && x.type === "expense"; }), function (x) { return x.amount; });
+      return { m: m, i: i, o: o };
+    });
+    if (!sig(box, JSON.stringify(rows))) return;
+    box.textContent = "";
+    rows.forEach(function (r) {
+      var w = el("div", "wallet");
+      w.appendChild(el("span", "label", r.m));
+      var b = el("b", "num " + (r.i - r.o < 0 ? "neg" : ""), "₹0"); w.appendChild(b); tween(b, r.i - r.o, inr);
+      w.appendChild(el("span", "io num", "In " + inrWhole(r.i) + " · Out " + inrWhole(r.o)));
+      box.appendChild(w);
+    });
+  }
+
+  function drawDonut(mTx, exp) {
+    var box = $("#donutBox");
+    var cats = {};
+    mTx.filter(function (x) { return x.type === "expense"; }).forEach(function (x) { var c = x.category || "Other"; cats[c] = (cats[c] || 0) + x.amount; });
+    var keys = Object.keys(cats).sort(function (a, b) { return cats[b] - cats[a]; });
+    var rows = keys.map(function (k) { return [k, cats[k]]; });
+    $("#catTotal").textContent = rows.length ? inr(exp) + " spent" : "";
+    if (!sig(box, JSON.stringify(rows))) return;
+    box.textContent = "";
+    if (!rows.length) {
+      box.appendChild(emptyBox("No spending in " + monthName(state.month), "Add an expense and your spending breakdown appears here."));
+      return;
+    }
+    var wrap = el("div", "donutwrap");
+    var dn = el("div", "donut");
+    var svg = svgEl("svg", { viewBox: "0 0 42 42", "aria-hidden": "true" });
+    svg.appendChild(svgEl("circle", { "class": "ring", cx: 21, cy: 21, r: 15.9155 }));
+    var legend = el("div", "dl");
+    var acc = 0, slices = [];
+    rows.forEach(function (r, i) {
+      var pct = r[1] / exp * 100, hue = CAT_HUES[i % CAT_HUES.length];
+      var c = svgEl("circle", { "class": "slice", cx: 21, cy: 21, r: 15.9155, "stroke-dasharray": "0 100", "stroke-dashoffset": String(-acc) });
+      c.style.setProperty("--ch", hue); svg.appendChild(c);
+      slices.push([c, Math.max(0, pct - (rows.length > 1 ? 0.8 : 0))]);
+      acc += pct;
+      var li = el("div"); var sw = el("span", "sw"); sw.style.setProperty("--ch", hue);
+      li.appendChild(sw); li.appendChild(el("span", "n", r[0]));
+      li.appendChild(el("span", "num", inr(r[1]) + " · " + Math.round(pct) + "%"));
+      legend.appendChild(li);
+    });
+    dn.appendChild(svg);
+    var mid = el("div", "mid"); mid.appendChild(el("span", "label", "Spent")); mid.appendChild(el("b", "num", inr(exp)));
+    dn.appendChild(mid);
+    wrap.appendChild(dn); wrap.appendChild(legend); box.appendChild(wrap);
+    slices.forEach(function (s) {
+      var v = s[1].toFixed(2) + " " + (100 - s[1]).toFixed(2);
+      if (reduced) s[0].setAttribute("stroke-dasharray", v); else later(function () { s[0].setAttribute("stroke-dasharray", v); });
+    });
+  }
+
+  function drawEntries(mTx) {
+    var list = $("#txList");
+    var shown = mTx.filter(function (x) { return state.modeFilter === "all" || x.mode === state.modeFilter; })
+      .sort(function (a, b) { return (b.date || "").localeCompare(a.date || "") || (b.ts || 0) - (a.ts || 0); });
+    if (!sig(list, JSON.stringify(shown) + state.month + state.modeFilter)) return;
+    list.textContent = "";
+    if (!shown.length) { list.appendChild(emptyBox("Nothing here yet", "Entries for " + monthName(state.month) + " appear as you add them above.")); return; }
+    shown.forEach(function (x) {
+      var it = el("div", "item");
+      it.appendChild(el("span", "badge " + (x.type === "income" ? "in" : "out"), String(x.mode || "—").toUpperCase()));
+      var m = el("div", "m");
+      m.appendChild(el("strong", "", x.note || x.category || "Entry"));
+      var chips = el("div", "chips");
+      chips.appendChild(el("span", "num", shortDate(x.date)));
+      if (x.category) chips.appendChild(el("span", "chip", x.category));
+      m.appendChild(chips);
+      var a = el("div", "a");
+      a.appendChild(el("span", "num " + (x.type === "income" ? "pos" : "neg"), (x.type === "income" ? "+" : "−") + inr(x.amount)));
+      var del = el("button", "linkbtn", "Delete"); del.type = "button"; armDelete(del, "tx", x.id); a.appendChild(del);
+      it.appendChild(m); it.appendChild(a);
+      list.appendChild(it);
+    });
+  }
+
+  function drawSavings() {
+    var total = sum(state.sv, svNet);
+    tween($("#savTotal"), total, inr);
+    $("#savSub").textContent = state.sv.length ? state.sv.length + (state.sv.length === 1 ? " entry" : " entries") + " so far" : "Nothing saved yet. Add your first amount below.";
+
+    var gl = $("#goalList");
+    var goals = state.goals.slice().sort(function (a, b) { return (a.ts || 0) - (b.ts || 0); });
+    var gdata = goals.map(function (g) { return [g, sum(state.sv.filter(function (e) { return e.goal === g.id; }), svNet)]; });
+    if (sig(gl, JSON.stringify(gdata))) {
+      gl.textContent = "";
+      if (!goals.length) { gl.style.display = "block"; gl.appendChild(emptyBox("No goals yet", "Create one below, like a trip or a gadget, and watch the ring fill.")); }
+      else gl.style.display = "";
+      var C = 2 * Math.PI * 26;
+      gdata.forEach(function (gd) {
+        var g = gd[0], saved = gd[1], frac = Math.max(0, Math.min(1, saved / g.target));
+        var box = el("div", "goal");
+        var svg = svgEl("svg", { viewBox: "0 0 64 64", "aria-hidden": "true" });
+        svg.appendChild(svgEl("circle", { "class": "tr", cx: 32, cy: 32, r: 26 }));
+        var pr = svgEl("circle", { "class": "pr", cx: 32, cy: 32, r: 26, "stroke-dasharray": C.toFixed(2), "stroke-dashoffset": C.toFixed(2) });
+        svg.appendChild(pr); box.appendChild(svg);
+        var t = el("div"); t.appendChild(el("strong", "", g.name));
+        var sub = el("div", "small muted num", inrWhole(saved) + " of " + inrWhole(g.target)); t.appendChild(sub);
+        box.appendChild(t);
+        box.appendChild(el("span", "small num " + (frac >= 1 ? "pos" : "muted"), frac >= 1 ? "Goal reached" : Math.round(frac * 100) + "% there"));
+        var acts = el("div", "acts");
+        var add = el("button", "btn ghost small", "Add money"); add.type = "button";
+        add.addEventListener("click", function () { $("#svGoal").value = g.id; $("#svAmount").focus(); });
+        acts.appendChild(add);
+        var del = el("button", "linkbtn", "Delete"); del.type = "button"; armDelete(del, "goals", g.id); acts.appendChild(del);
+        box.appendChild(acts); gl.appendChild(box);
+        var off = (C * (1 - frac)).toFixed(2);
+        if (reduced) pr.setAttribute("stroke-dashoffset", off); else later(function () { pr.setAttribute("stroke-dashoffset", off); });
+      });
+    }
+    fillSelect($("#svGoal"), [{ value: "", label: "No goal (general savings)" }].concat(goals.map(function (g) { return { value: g.id, label: g.name }; })), true);
+
+    var sl = $("#svList");
+    var hist = state.sv.slice().sort(function (a, b) { return (b.date || "").localeCompare(a.date || "") || (b.ts || 0) - (a.ts || 0); });
+    if (!sig(sl, JSON.stringify(hist) + JSON.stringify(goals.map(function (g) { return g.name; })))) return;
+    sl.textContent = "";
+    var gname = {}; state.goals.forEach(function (g) { gname[g.id] = g.name; });
+    if (!hist.length) { sl.appendChild(emptyBox("No savings entries", "Money you put away will be listed here.")); return; }
+    hist.forEach(function (e) {
+      var it = el("div", "item");
+      it.appendChild(el("span", "badge " + (e.kind === "withdraw" ? "out" : "in"), e.kind === "withdraw" ? "OUT" : "SAVE"));
+      var m = el("div", "m");
+      m.appendChild(el("strong", "", e.note || (e.kind === "withdraw" ? "Taken out" : "Saved")));
+      var chips = el("div", "chips");
+      chips.appendChild(el("span", "num", shortDate(e.date)));
+      chips.appendChild(el("span", "chip", e.goal && gname[e.goal] ? gname[e.goal] : "General"));
+      m.appendChild(chips);
+      var a = el("div", "a");
+      a.appendChild(el("span", "num " + (e.kind === "withdraw" ? "neg" : "pos"), (e.kind === "withdraw" ? "−" : "+") + inr(e.amount)));
+      var del = el("button", "linkbtn", "Delete"); del.type = "button"; armDelete(del, "savings", e.id); a.appendChild(del);
+      it.appendChild(m); it.appendChild(a);
+      sl.appendChild(it);
+    });
+  }
+
+  /* ---------- identity and data ---------- */
+  function gate(msg) { $("#gateMsg").textContent = msg; $("#gate").hidden = false; $("#app").hidden = true; $("#fab").hidden = true; }
+  function subscribe(key, ref) {
+    ref.onSnapshot(function (snap) {
+      state[key] = snap.docs.map(function (d) { var o = d.data() || {}; o.id = d.id; return o; });
+      if (!snap.metadata.fromCache) state.confirmed[key] = true;
+      if (state.confirmed.tx && state.confirmed.sv && state.confirmed.goals) setStatus("");
+      draw();
+    }, function () { setStatus("Your data can't be reached right now. What you see may be out of date."); });
+  }
+
+  var cl = window.claude;
+  if (!cl || !cl.use) { gate("Open this page in claude.ai and sign in to use your book."); return; }
+  Promise.all([cl.use("db"), cl.use("user")]).then(function (r) {
+    var db = r[0], userNs = r[1];
+    if (!db || !userNs) { gate("Sign in to claude.ai to open your book. Each person's entries stay private to their own account."); return; }
+    return userNs.me().then(function (me) {
+      if (!me || !me.id) { gate("Sign in to claude.ai to open your book. Each person's entries stay private to their own account."); return; }
+      state.me = me.id; state.name = (me.name || "").split(" ")[0];
+      $("#userName").textContent = me.name || "You";
+      try { $("#avatar").src = me.avatarUrl; } catch (e) {}
+      var book = db.doc("data/users/" + me.id + "/book");
+      cols = { tx: book.collection("tx"), savings: book.collection("savings"), goals: book.collection("goals") };
+      prefsRef = db.doc("data/users/" + me.id + "/settings");
+      state.ready = true;
+      $("#gate").hidden = true; $("#app").hidden = false;
+      showTab(state.tab);
+      draw();
+      setTimeout(function () {
+        if (!(state.confirmed.tx && state.confirmed.sv && state.confirmed.goals)) setStatus("Your data can't be reached yet. What you see may be out of date.");
+      }, 10000);
+      subscribe("tx", cols.tx); subscribe("sv", cols.savings); subscribe("goals", cols.goals);
+      prefsRef.onSnapshot(function (s) { var d = s.exists ? s.data() : null; if (d && typeof d.hue === "number") applyHue(d.hue); }, function () {});
+    });
+  }).catch(function () { gate("Your book is unavailable right now. Try again in a moment."); });
+})();
+</script>
+
+</body></html>
